@@ -1,7 +1,17 @@
 name: Build Xiaomi ARM64 APK
 
 on:
+  # 这个让你可以手动点击按钮运行
   workflow_dispatch:
+    inputs:
+      upload-artifact:
+        type: boolean
+        default: true
+      upload-tag:
+        type: string
+        default: "nightly"
+  # 这个是“接口”，让 Full Flutter CI 能调用它（补齐这一段就不报错了）
+  workflow_call:
     inputs:
       upload-artifact:
         type: boolean
@@ -23,11 +33,11 @@ env:
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
 
 jobs:
-  # 1. 核心桥接生成（FFI 通信必需）
+  # 1. 核心桥接生成
   generate-bridge:
     uses: ./.github/workflows/bridge.yml
 
-  # 2. 安卓 APK 构建（单架构 AArch64）
+  # 2. 安卓 APK 构建（仅保留 ARM64 针对小米/红米）
   build-rustdesk-android:
     needs: [generate-bridge]
     name: build rustdesk android apk aarch64
@@ -101,7 +111,7 @@ jobs:
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
-          # 使用 debug 签名以便生成后能直接安装
+          # 强制使用 debug 签名以便生成后能直接安装
           sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
           pushd flutter
           flutter build apk --release --target-platform android-arm64
