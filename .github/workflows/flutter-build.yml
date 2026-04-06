@@ -1,17 +1,7 @@
 name: Build Xiaomi ARM64 APK
 
 on:
-  # 1. 允许你在 Actions 页面手动点击运行
   workflow_dispatch:
-    inputs:
-      upload-artifact:
-        type: boolean
-        default: true
-      upload-tag:
-        type: string
-        default: "nightly"
-  # 2. 允许被 Full Flutter CI 或其他脚本调用（解决你现在的报错）
-  workflow_call:
     inputs:
       upload-artifact:
         type: boolean
@@ -33,9 +23,11 @@ env:
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
 
 jobs:
+  # 1. 核心桥接生成（FFI 通信必需）
   generate-bridge:
     uses: ./.github/workflows/bridge.yml
 
+  # 2. 安卓 APK 构建（单架构 AArch64）
   build-rustdesk-android:
     needs: [generate-bridge]
     name: build rustdesk android apk aarch64
@@ -59,9 +51,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            clang cmake curl git g++ llvm-dev nasm ninja-build \
-            openjdk-17-jdk-headless pkg-config wget \
-            gcc-multilib g++-multilib libclang-dev # <--- 解决 bits/libc-header-start.h 缺失
+            clang \
+            cmake \
+            curl \
+            gcc-multilib \
+            g++-multilib \
+            git \
+            g++ \
+            llvm-dev \
+            nasm \
+            ninja-build \
+            openjdk-17-jdk-headless \
+            pkg-config \
+            wget \
+            libclang-dev
 
       - name: Install flutter
         uses: subosito/flutter-action@v2
@@ -106,12 +109,14 @@ jobs:
           ./flutter/ndk_arm64.sh
           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
           cp ./target/aarch64-linux-android/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
-
+          cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
+      
       - name: Build APK (Flutter 侧)
         shell: bash
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
+          # 使用 debug 签名以便生成后能直接安装
           sed -i "s/signingConfigs.release/signingConfigs.debug/g" ./flutter/android/app/build.gradle
           pushd flutter
           flutter build apk --release --target-platform android-arm64
