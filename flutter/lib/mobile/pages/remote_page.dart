@@ -858,7 +858,6 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     });
   }
 }
-}
 
 class KeyHelpTools extends StatefulWidget {
   final bool keyboardIsVisible;
