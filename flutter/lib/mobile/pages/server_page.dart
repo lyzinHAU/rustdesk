@@ -343,6 +343,31 @@ class ServiceNotRunningNotification extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 显示本机连接ID
+            Row(children: [
+              const Icon(Icons.perm_identity,
+                      color: Colors.grey, size: 20)
+                  .marginOnly(right: 10),
+              Text(
+                translate('ID'),
+                style: TextStyle(
+                    fontSize: 14.0, fontWeight: FontWeight.bold, color: Colors.grey),
+              )
+            ]),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text(
+                serverModel.serverId.value.text,
+                style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(Icons.copy_outlined, size: 18),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: serverModel.serverId.value.text.trim()));
+                    showToast(translate('Copied'));
+                  })
+            ]).marginOnly(left: 30, bottom: 15),
+            
             Text(translate("android_start_service_tip"),
                     style:
                         const TextStyle(fontSize: 12, color: MyTheme.darkGray))
@@ -1029,10 +1054,6 @@ void androidChannelInit() {
 }
 
 void showScamWarning(BuildContext context, ServerModel serverModel) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return ScamWarningDialog(serverModel: serverModel);
-    },
-  );
+  // No scam warning dialog should be shown.
+  // This function intentionally does nothing.
 }

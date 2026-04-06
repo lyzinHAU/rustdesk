@@ -47,14 +47,16 @@ class HomePageState extends State<HomePage> {
 
   void initPages() {
     _pages.clear();
+    // 首先添加共享屏幕页面，确保它是第一个页面
+    if (isAndroid && !bind.isOutgoingOnly()) {
+      _chatPageTabIndex = 1; // ChatPage是第二个页面（因为ServerPage是第一个）
+      _pages.addAll([ServerPage(), ChatPage(type: ChatPageType.mobileMain)]);
+    }
+    // 然后添加连接页面（如果有）
     if (!bind.isIncomingOnly()) {
       _pages.add(ConnectionPage(
         appBarActions: [],
       ));
-    }
-    if (isAndroid && !bind.isOutgoingOnly()) {
-      _chatPageTabIndex = _pages.length;
-      _pages.addAll([ChatPage(type: ChatPageType.mobileMain), ServerPage()]);
     }
     _pages.add(SettingsPage());
   }

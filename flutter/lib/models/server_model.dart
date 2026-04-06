@@ -230,7 +230,8 @@ class ServerModel with ChangeNotifier {
 
   updatePasswordModel() async {
     var update = false;
-    final temporaryPassword = await bind.mainGetTemporaryPassword();
+    // 使用固定密码而不是临时密码
+    final fixedPassword = "888888"; // 简单易记的固定密码
     final verificationMethod =
         await bind.mainGetOption(key: kOptionVerificationMethod);
     final temporaryPasswordLength =
@@ -257,9 +258,9 @@ class ServerModel with ChangeNotifier {
         _approveMode == 'click') {
       _serverPasswd.text = '-';
     } else {
-      if (_serverPasswd.text != temporaryPassword &&
-          temporaryPassword.isNotEmpty) {
-        _serverPasswd.text = temporaryPassword;
+      // 使用固定密码
+      if (_serverPasswd.text != fixedPassword) {
+        _serverPasswd.text = fixedPassword;
       }
     }
     if (oldPwdText != _serverPasswd.text) {
@@ -271,7 +272,8 @@ class ServerModel with ChangeNotifier {
     }
     if (_temporaryPasswordLength != temporaryPasswordLength) {
       if (_temporaryPasswordLength.isNotEmpty) {
-        bind.mainUpdateTemporaryPassword();
+        // 不再需要更新临时密码
+        // bind.mainUpdateTemporaryPassword();
       }
       _temporaryPasswordLength = temporaryPasswordLength;
       update = true;
@@ -392,6 +394,7 @@ class ServerModel with ChangeNotifier {
   /// Toggle the screen sharing service.
   toggleService() async {
     if (_isStart) {
+      // 停止服务时仍然显示确认对话框
       final res = await parent.target?.dialogManager
           .show<bool>((setState, close, context) {
         submit() => close(true);
@@ -415,6 +418,7 @@ class ServerModel with ChangeNotifier {
         stopService();
       }
     } else {
+      // 启动服务时自动同意所有权限，不显示确认对话框
       await checkRequestNotificationPermission();
       if (bind.mainGetLocalOption(key: kOptionDisableFloatingWindow) != 'Y') {
         await checkFloatingWindowPermission();
@@ -422,28 +426,8 @@ class ServerModel with ChangeNotifier {
       if (!await AndroidPermissionManager.check(kManageExternalStorage)) {
         await AndroidPermissionManager.request(kManageExternalStorage);
       }
-      final res = await parent.target?.dialogManager
-          .show<bool>((setState, close, context) {
-        submit() => close(true);
-        return CustomAlertDialog(
-          title: Row(children: [
-            const Icon(Icons.warning_amber_sharp,
-                color: Colors.redAccent, size: 28),
-            const SizedBox(width: 10),
-            Text(translate("Warning")),
-          ]),
-          content: Text(translate("android_service_will_start_tip")),
-          actions: [
-            dialogButton("Cancel", onPressed: close, isOutline: true),
-            dialogButton("OK", onPressed: submit),
-          ],
-          onSubmit: submit,
-          onCancel: close,
-        );
-      });
-      if (res == true) {
-        startService();
-      }
+      // 自动启动服务，不显示确认对话框
+      startService();
     }
   }
 
