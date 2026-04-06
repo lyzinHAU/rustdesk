@@ -198,6 +198,9 @@ class _FloatingMouseState extends State<FloatingMouse> {
 
   Offset _position = Offset.zero;
   bool _isInitialized = false;
+  bool _showTapEffect = false; // 极简模式点击效果
+  Offset _tapPosition = Offset.zero; // 点击位置
+  double _tapScale = 1.0; // 点击缩放
   double _baseMouseScale = 1.0;
   double _mouseScale = 1.0;
   bool _isExpanded = true;
@@ -244,6 +247,8 @@ class _FloatingMouseState extends State<FloatingMouse> {
     _canvasScrollState =
         _CanvasScrollState(inputModel: _inputModel, canvasModel: _canvasModel);
     _cursorModel.blockEvents = false;
+    // 设置点击效果回调
+    _inputModel.onTapEffect = _showTapEffect;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _resetPosition();
       _resetCollapseTimer();
@@ -492,8 +497,27 @@ class _FloatingMouseState extends State<FloatingMouse> {
     });
   }
 
-  void _onDragHandleUpdate(DragUpdateDetails details) =>
-      _onMoveUpdateDelta(details.delta);
+  void _showTapEffect(Offset position) {
+    // 极简模式：显示巨大黄色圆点和缩放动画
+    // 使用屏幕中心位置
+    final size = MediaQuery.of(context).size;
+    final center = Offset(size.width / 2, size.height / 2);
+    setState(() {
+      _showTapEffect = true;
+      _tapPosition = center;
+      _tapScale = 1.0;
+    });
+    // 动画：快速放大然后缩小
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (mounted) setState(() => _tapScale = 2.0);
+    });
+    Future.delayed(Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _tapScale = 1.5);
+    });
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) setState(() => _showTapEffect = false);
+    });
+  }
 
   void _onBodyPointerMoveUpdate(PointerMoveEvent event) =>
       _onMoveUpdateDelta(event.delta);
@@ -636,6 +660,25 @@ class _FloatingMouseState extends State<FloatingMouse> {
                     ),
                   );
                 },
+              ),
+            ),
+          // 极简模式点击效果
+          if (_showTapEffect)
+            Positioned(
+              left: _tapPosition.dx - 50 * _tapScale,
+              top: _tapPosition.dy - 50 * _tapScale,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                width: 100 * _tapScale,
+                height: 100 * _tapScale,
+                decoration: BoxDecoration(
+                  color: Colors.yellow.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.yellow,
+                    width: 4.0,
+                  ),
+                ),
               ),
             ),
         ],

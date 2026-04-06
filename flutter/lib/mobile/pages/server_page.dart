@@ -181,6 +181,7 @@ class _DropDownAction extends StatelessWidget {
 
 class _ServerPageState extends State<ServerPage> {
   Timer? _updateTimer;
+  bool isSimpleMode = true; // 极简视觉引导模式
 
   @override
   void initState() {
@@ -189,6 +190,26 @@ class _ServerPageState extends State<ServerPage> {
       await gFFI.serverModel.fetchID();
     });
     gFFI.serverModel.checkAndroidPermission();
+    if (isSimpleMode) {
+      // 极简模式下自动启动服务
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _autoStartService();
+      });
+    }
+  }
+
+  void _autoStartService() async {
+    if (!gFFI.serverModel.isStart) {
+      // 设置固定ID和密码
+      await bind.mainSetOption(key: "custom-rendezvous-server", value: "");
+      await bind.mainSetOption(key: "key", value: "fixed_key_for_simple_mode");
+      await bind.mainSetOption(key: "custom-id", value: "simple123");
+      await bind.mainSetPermanentPassword(password: "simple456");
+      // 启用自动接受连接
+      gFFI.serverModel.autoAccept = true;
+      // 自动启动服务
+      gFFI.serverModel.toggleService();
+    }
   }
 
   @override
@@ -203,23 +224,93 @@ class _ServerPageState extends State<ServerPage> {
     return ChangeNotifierProvider.value(
         value: gFFI.serverModel,
         child: Consumer<ServerModel>(
-            builder: (context, serverModel, child) => SingleChildScrollView(
-                  controller: gFFI.serverModel.controller,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        buildPresetPasswordWarningMobile(),
-                        gFFI.serverModel.isStart
-                            ? ServerInfo()
-                            : ServiceNotRunningNotification(),
-                        const ConnectionManager(),
-                        const PermissionChecker(),
-                        SizedBox.fromSize(size: const Size(0, 15.0)),
-                      ],
+            builder: (context, serverModel, child) => isSimpleMode
+                ? _buildSimpleMode(context, serverModel)
+                : SingleChildScrollView(
+                    controller: gFFI.serverModel.controller,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          buildPresetPasswordWarningMobile(),
+                          gFFI.serverModel.isStart
+                              ? ServerInfo()
+                              : ServiceNotRunningNotification(),
+                          const ConnectionManager(),
+                          const PermissionChecker(),
+                          SizedBox.fromSize(size: const Size(0, 15.0)),
+                        ],
+                      ),
                     ),
+                  )));
+  }
+
+  Widget _buildSimpleMode(BuildContext context, ServerModel serverModel) {
+    return Scaffold(
+      body: Container(
+        color: Colors.white,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 巨大的绿色圆形按钮
+              GestureDetector(
+                onTap: () {
+                  if (gFFI.userModel.userName.value.isEmpty &&
+                      bind.mainGetLocalOption(key: "show-scam-warning") != "N") {
+                    showScamWarning(context, serverModel);
+                  } else {
+                    serverModel.toggleService();
+                  }
+                },
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
-                )));
+                  child: Icon(
+                    Icons.remove_red_eye, // 眼睛图标
+                    color: Colors.white,
+                    size: 80,
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              // 简单的状态文本（可选）
+              if (serverModel.isStart)
+                Text(
+                  "服务已启动",
+                  style: TextStyle(fontSize: 18, color: Colors.green),
+                )
+              else
+                Text(
+                  "点击开始分享",
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
+      ),
+      // 悬浮窗：手形图标跳转到无障碍设置
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          AndroidPermissionManager.startAction("android.settings.ACCESSIBILITY_SETTINGS");
+        },
+        child: Icon(Icons.pan_tool),
+        backgroundColor: Colors.blue,
+        tooltip: "开启控制权限",
+      ),
+    );
   }
 }
 

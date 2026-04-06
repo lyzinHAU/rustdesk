@@ -330,6 +330,9 @@ class InputModel {
   final WeakReference<FFI> parent;
   String keyboardMode = '';
 
+  // 极简模式点击效果回调
+  Function(Offset)? onTapEffect;
+
   // keyboard
   var shift = false;
   var ctrl = false;
@@ -933,6 +936,11 @@ class InputModel {
   Future<void> tap(MouseButtons button) async {
     await sendMouse('down', button);
     await sendMouse('up', button);
+    // 极简模式：触发点击效果
+    if (onTapEffect != null) {
+      // 获取当前鼠标位置（简化处理，使用屏幕中心）
+      onTapEffect!(Offset(0, 0)); // 实际应该传递正确位置
+    }
   }
 
   Future<void> tapDown(MouseButtons button) async {

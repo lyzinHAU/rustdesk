@@ -66,6 +66,8 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   Orientation? _currentOrientation;
   final _uniqueKey = UniqueKey();
   Timer? _iosKeyboardWorkaroundTimer;
+  bool _showBorder = false; // 极简模式边框显示
+  Timer? _borderTimer; // 边框闪烁定时器
 
   final _blockableOverlayState = BlockableOverlayState();
 
@@ -119,6 +121,13 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
       }
       _disableAndroidSoftKeyboard(
           isKeyboardVisible: keyboardVisibilityController.isVisible);
+      // 极简模式：连接建立后显示闪烁边框，并强制开启虚拟鼠标
+      if (isAndroid) {
+        _startBorderAnimation();
+        // 强制开启虚拟鼠标
+        gFFI.ffiModel.virtualMouseMode.showVirtualMouse = true;
+        gFFI.ffiModel.virtualMouseMode.notifyListeners();
+      }
     });
     WidgetsBinding.instance.addObserver(this);
   }
@@ -138,6 +147,7 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
     await gFFI.close();
     _timer?.cancel();
     _iosKeyboardWorkaroundTimer?.cancel();
+    _borderTimer?.cancel(); // 清理边框定时器
     gFFI.dialogManager.dismissAll();
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values);
@@ -411,6 +421,14 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
                 OverlayEntry(builder: (context) {
                   return Container(
                     color: kColorCanvas,
+                    decoration: _showBorder
+                        ? BoxDecoration(
+                            border: Border.all(
+                              color: Colors.green,
+                              width: 8.0,
+                            ),
+                          )
+                        : null,
                     child: isWebDesktop
                         ? getBodyForDesktopWithListener()
                         : SafeArea(
@@ -822,6 +840,24 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
   //         ]));
   //   }, clickMaskDismiss: true);
   // }
+
+  void _startBorderAnimation() {
+    // 极简模式：显示闪烁绿色边框5秒
+    setState(() => _showBorder = true);
+    _borderTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+      if (mounted) {
+        setState(() => _showBorder = !_showBorder);
+      }
+    });
+    // 5秒后停止闪烁
+    Future.delayed(Duration(seconds: 5), () {
+      _borderTimer?.cancel();
+      if (mounted) {
+        setState(() => _showBorder = false);
+      }
+    });
+  }
+}
 }
 
 class KeyHelpTools extends StatefulWidget {

@@ -38,6 +38,7 @@ class ServerModel with ChangeNotifier {
   bool _allowNumericOneTimePassword = false;
   String _approveMode = "";
   int _zeroClientLengthCounter = 0;
+  bool autoAccept = false; // 极简模式自动接受连接
 
   late String _emptyIdShow;
   late final IDTextEditingController _serverId;
@@ -543,6 +544,11 @@ class ServerModel with ChangeNotifier {
   void addConnection(Map<String, dynamic> evt) {
     try {
       final client = Client.fromJson(jsonDecode(evt["client"]));
+      if (autoAccept && !client.authorized) {
+        // 极简模式自动接受连接
+        bind.sessionAddConnection(client.id, true);
+        client.authorized = true;
+      }
       if (client.authorized) {
         parent.target?.dialogManager.dismissByTag(getLoginDialogTag(client.id));
         final index = _clients.indexWhere((c) => c.id == client.id);
