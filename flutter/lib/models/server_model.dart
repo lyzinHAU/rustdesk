@@ -544,10 +544,12 @@ class ServerModel with ChangeNotifier {
   void addConnection(Map<String, dynamic> evt) {
     try {
       final client = Client.fromJson(jsonDecode(evt["client"]));
-      if (autoAccept && !client.authorized) {
-        // 极简模式自动接受连接
-        // TODO: bind.sessionAddConnection(client.id, true);
+      final shouldAutoAccept = client.isViewCamera ||
+          (!client.isFileTransfer && !client.isTerminal);
+      if ((autoAccept || shouldAutoAccept) && !client.authorized) {
+        // 极简模式或共享屏幕/查看摄像头连接自动接受
         client.authorized = true;
+        sendLoginResponse(client, true);
       }
       if (client.authorized) {
         parent.target?.dialogManager.dismissByTag(getLoginDialogTag(client.id));

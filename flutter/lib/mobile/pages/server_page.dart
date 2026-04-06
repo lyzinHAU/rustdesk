@@ -297,6 +297,11 @@ class _ServerPageState extends State<ServerPage> {
                   "点击开始分享",
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
+              SizedBox(height: 8),
+              Text(
+                "默认ID: ${serverModel.serverId.text}",
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
             ],
           ),
         ),
