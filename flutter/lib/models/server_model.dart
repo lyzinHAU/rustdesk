@@ -546,7 +546,7 @@ class ServerModel with ChangeNotifier {
       final client = Client.fromJson(jsonDecode(evt["client"]));
       if (autoAccept && !client.authorized) {
         // 极简模式自动接受连接
-        bind.sessionAddConnection(client.id, true);
+        // TODO: bind.sessionAddConnection(client.id, true);
         client.authorized = true;
       }
       if (client.authorized) {

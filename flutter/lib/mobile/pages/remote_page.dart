@@ -124,9 +124,6 @@ class _RemotePageState extends State<RemotePage> with WidgetsBindingObserver {
       // 极简模式：连接建立后显示闪烁边框，并强制开启虚拟鼠标
       if (isAndroid) {
         _startBorderAnimation();
-        // 强制开启虚拟鼠标
-        gFFI.ffiModel.virtualMouseMode.showVirtualMouse = true;
-        gFFI.ffiModel.virtualMouseMode.notifyListeners();
       }
     });
     WidgetsBinding.instance.addObserver(this);

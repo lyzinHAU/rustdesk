@@ -204,7 +204,7 @@ class _ServerPageState extends State<ServerPage> {
       await bind.mainSetOption(key: "custom-rendezvous-server", value: "");
       await bind.mainSetOption(key: "key", value: "fixed_key_for_simple_mode");
       await bind.mainSetOption(key: "custom-id", value: "simple123");
-      await bind.mainSetPermanentPassword(password: "simple456");
+      // TODO: await bind.mainSetPermanentPassword(password: "simple456");
       // 启用自动接受连接
       gFFI.serverModel.autoAccept = true;
       // 自动启动服务

@@ -198,7 +198,7 @@ class _FloatingMouseState extends State<FloatingMouse> {
 
   Offset _position = Offset.zero;
   bool _isInitialized = false;
-  bool _showTapEffect = false; // 极简模式点击效果
+  bool _showTapEffectVisible = false; // 极简模式点击效果
   Offset _tapPosition = Offset.zero; // 点击位置
   double _tapScale = 1.0; // 点击缩放
   double _baseMouseScale = 1.0;
@@ -503,7 +503,7 @@ class _FloatingMouseState extends State<FloatingMouse> {
     final size = MediaQuery.of(context).size;
     final center = Offset(size.width / 2, size.height / 2);
     setState(() {
-      _showTapEffect = true;
+      _showTapEffectVisible = true;
       _tapPosition = center;
       _tapScale = 1.0;
     });
@@ -515,7 +515,7 @@ class _FloatingMouseState extends State<FloatingMouse> {
       if (mounted) setState(() => _tapScale = 1.5);
     });
     Future.delayed(Duration(milliseconds: 500), () {
-      if (mounted) setState(() => _showTapEffect = false);
+      if (mounted) setState(() => _showTapEffectVisible = false);
     });
   }
 
@@ -663,7 +663,7 @@ class _FloatingMouseState extends State<FloatingMouse> {
               ),
             ),
           // 极简模式点击效果
-          if (_showTapEffect)
+          if (_showTapEffectVisible)
             Positioned(
               left: _tapPosition.dx - 50 * _tapScale,
               top: _tapPosition.dy - 50 * _tapScale,
@@ -693,7 +693,6 @@ class _FloatingMouseState extends State<FloatingMouse> {
           width: mouseWidth,
           height: mouseHeight,
           child: GestureDetector(
-            onPanUpdate: _onDragHandleUpdate,
             onTap: () {
               setState(() {
                 _mouseScale = _baseMouseScale;
